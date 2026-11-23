@@ -1,0 +1,116 @@
+from pygame import *
+
+class GameSprite(sprite.Sprite):
+    def __init__(self, player_image, player_x, player_y, player_speed):
+        super().__init__()
+        self.image = transform.scale(image.load(player_image), (70, 70))
+        self.speed = player_speed
+        self.rect = self.image.get_rect()
+        self.rect.x = player_x
+        self.rect.y = player_y
+
+    def reset(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+class PLayer(GameSprite):
+    def update(self):
+        keys = key.get_pressed()
+        if keys[K_LEFT] and self.rect.x > 5:
+            self.rect.x -= self.speed
+        if keys[K_RIGHT] and self.rect.x < 630:
+            self.rect.x += self.speed
+        if keys[K_UP] and self.rect.y > 5:
+            self.rect.y -= self.speed
+        if keys[K_DOWN] and self.rect.y < 430:
+            self.rect.y += self.speed
+
+class Enemy(GameSprite):
+    direction = "left"
+    def update(self):
+        if self.rect.x <= 470:
+            self.directoin = "right"
+        if self.rect.x >= 630:
+            self.directoin = "left"
+
+        if self.directoin == "left":
+            self.rect.x -= self.speed
+        else:
+            self.rect.x += self.speed
+
+class Wall(sprite.Sprite):
+    def __init__(self, color_1, color_2, color_3, wall_x, wall_y, wall_width, wall_height):
+        super().__init__()
+        self.color_1 = color_1
+        self.color_2 = color_2
+        self.color_3 = color_3
+        self.width = wall_width
+        self.height = wall_height
+        self.image = Surface((self.width, self.height))
+        self.image.fill((self.color_1, self.color_2, self.color_3))
+        self.rect = self.image.get_rect()
+        self.rect.x = wall_x
+        self.rect.y = wall_y
+
+    def draw_wall(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+window = display.set_mode((700, 500))
+background = transform.scale(image.load('background.jpg'),(700, 500))
+clock = time.Clock()
+FPS = 60
+
+font.init()
+font = font.SysFont('Arial', 70)
+win = font.render('YOU WIN!', True, (255, 215, 0))
+lose = font.render('YOU LOSE!', True, (255, 0, 0))
+
+hero = PLayer('hero.png', 5, 420, 5)
+monstr = Enemy('cyborg.png', 630, 280, 3)
+gold = GameSprite('treasure.png', 620, 400, 3)
+
+wall_1 = Wall(120, 210, 0, 100, 20, 580, 10)
+wall_2 = Wall(120, 210, 0, 100, 20, 10, 350)
+wall_3 = Wall(120, 210, 0, 200, 130, 10, 360)
+wall_4 = Wall(120, 210, 0, 10, 370, 100, 10)
+wall_5 = Wall(120, 210, 0, 310, 20, 10, 350)
+wall_6 = Wall(120, 210, 0, 200, 480, 350, 10)
+wall_7 = Wall(120, 210, 0, 400, 130, 10, 240)
+wall_8 = Wall(120, 210, 0, 400, 370, 150, 10)
+wall_9 = Wall(120, 210, 0, 550, 370, 10, 120)
+wall_10 = Wall(120, 210, 0, 400, 130, 150, 10)
+walls = [wall_1, wall_2, wall_3, wall_4, wall_5, wall_6, wall_7, wall_8,wall_9, wall_10]
+
+game = True
+finish = False
+while game:
+    clock.tick(60)
+    for e in event.get():
+        if e.type == QUIT:
+           game = False
+
+    if finish != True:
+        window.blit(background, (0, 0))
+        monstr.update()
+        hero.update()
+
+        for w in walls:
+            w.draw_wall()
+
+        hero.reset()
+        monstr.reset()
+        gold.reset()
+
+        if sprite.collide_rect(hero,monstr):
+            finish = True
+            window.blit(lose, (200, 200))
+
+        for w in walls:
+            if sprite.collide_rect(hero,w):
+                finish = True
+                window.blit(lose, (200, 200))
+
+        if sprite.collide_rect(hero, gold):
+            finish = True
+            window.blit(win, (200, 200))
+
+    display.update()
